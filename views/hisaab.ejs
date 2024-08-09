@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khaatabook</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+  <div class="container mx-auto p-4 flex-grow flex flex-col">
+    <!-- Header -->
+    <header class="flex justify-between items-center py-4">
+      <h1 class="text-2xl font-bold">Khaatabook</h1>
+      <nav>
+        <a href="/" class="mr-4 text-gray-600 hover:text-gray-800">Home</a>
+        <a href="/create" class="text-gray-600 hover:text-gray-800">Create New Hisaab</a>
+      </nav>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="mt-8 flex-grow flex flex-col justify-center items-center">
+      <div class="w-full max-w-2xl bg-white p-6 rounded shadow">
+        <h2 class="text-2xl font-semibold mb-6 text-center">
+          Hisaab of <a href="#" class="text-blue-500 hover:underline"><%= filename.replace('.txt', '')%></a>
+        </h2>
+        <p class="mb-6 text-gray-700 whitespace-pre-wrap"><%= filedata %></p>
+        <div class="text-center">
+          <a href="/edit/<%= filename %>" class="text-blue-500 hover:underline">Edit Hisaab</a>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+</body>
+</html>
