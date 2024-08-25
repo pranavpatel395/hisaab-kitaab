@@ -1,14 +1,20 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 const debuglog = require('debug')("development:mongooseconfig");
+require('dotenv').config();  // Load environment variables from .env file
 
-mongoose.connect('mongodb://127.0.0.1:27017/registerdb')
+const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/registerdb';
 
-const db = mongoose.connection
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
-db.on('error', function(error){
-  console.log(error)
-})
+const db = mongoose.connection;
 
-db.on('open',function(){
-  console.log('mongodb Connection Sucessfull')
-})
+db.on('error', function (error) {
+  debuglog('MongoDB connection error:', error);
+});
+
+db.once('open', function () {
+  debuglog('MongoDB connection successful');
+});
