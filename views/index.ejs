@@ -9,40 +9,41 @@
     rel="stylesheet"
   />
   <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+  <!-- <link rel="stylesheet" href="/css/index.css"> -->
 </head>
 <body class="bg-white text-gray-800 min-h-screen flex flex-col">
 
-  <!-- Navbar -->
-  <nav class="bg-blue-500 p-4 flex justify-between items-center">
-    <div class="text-white text-xl font-bold">Khataabook</div>
-    <div class="space-x-4">
-      <a href="/" class="text-white">Home</a>
-      <a href="/create" class="text-white">Create New Hisaab</a>
-    </div>
-  </nav>
+  <!-- Include Navbar -->
+  <%- include('navbar') %>
 
   <!-- Main Content -->
-  <main class="flex-grow flex justify-center items-center p-6">
-    <div class="w-full max-w-2xl max-h-[70vh] overflow-y-auto">
+  <main class="flex-grow flex justify-center p-6">
+    <div class="w-full max-w-7xl">
       <h1 class="text-3xl md:text-4xl font-bold mb-6 text-center">All Hisaab Khataab</h1>
-      <ul class="space-y-4">
-        <!-- List Item -->
+      
+      <!-- Flex container for the boxes -->
+      <ul class="flex flex-wrap -mx-2">
         <% if (files.length > 0) { %>
-          <% files.forEach(function(file) { 
-            // Remove .txt extension from filename
-            let filenameWithoutExt = file.replace('.txt', '');
-          %>
-            <li class="flex justify-between items-center bg-gray-100 p-4 rounded">
-              <span class="text-lg"><%= filenameWithoutExt %></span>
-              <div class="space-x-4">
-                <a href="/hisaab/<%= file%>" class="text-blue-500">👁️</a>
-                <a href="/edit/<%=file%>" class="text-blue-500"><i class="icon-edit"></i> edit</a>
-                <a href="/delet/<%=file%>" class="text-blue-500">🗑️</a>
+          <% files.forEach(function(file) { %>
+            <li class="w-full md:w-1/3 px-2 mb-4">
+              <div class="bg-gray-100 p-4 rounded h-full flex flex-col justify-between relative shadow">
+                
+                <!-- Date in the top-right corner -->
+                <span class="text-xs text-gray-400 absolute top-2 right-2"><%= file.createdDate %></span>
+                
+                <!-- Main content -->
+                <span class="text-lg text-gray-600"><%= file.title %></span>
+                
+                <div class="space-x-4 mt-4">
+                  <a href="/hisaab/<%= file.name %>" class="text-blue-500">👁️</a>
+                  <a href="/edit/<%= file.name %>" class="text-blue-500"><i class="icon-edit"></i> edit</a>
+                  <a href="/delet/<%= file.name %>" class="text-blue-500">🗑️</a>
+                </div>
               </div>
             </li>
           <% }) %>
         <% } else { %>
-          <h2 class="text-center text-lg text-gray-500">No hisaab is created</h2>
+          <h2 class="text-center text-lg text-gray-500 shadow p-4 rounded">No hisaab is created</h2>
         <% } %>
       </ul>
     </div>

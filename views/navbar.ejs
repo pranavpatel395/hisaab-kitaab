@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    .shadow {
+    --tw-shadow: 0 1px 3px 0 rgb(152 152 152), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    box-shadow: var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);
+}
+  </style>
+</head>
+<body>
+  <nav id="navbar" class="p-4 bg-gray-300 flex justify-between items-center shadow">
+    <div class="text-gray-800 text-xl font-bold">Khataabook</div>
+    <div class="space-x-4 flex items-center">
+      <% if (user) { %>
+        <a href="/logout" class="text-gray-800">Logout</a>
+        <a href="/" class="text-gray-800">Home</a>
+        <a href="/create" class="text-gray-800">Create New Hisaab</a>
+      <% } else { %>
+        <a href="/register" class="text-gray-800">Register</a>
+        <a href="/login" class="text-gray-800">Login</a>
+      <% } %>
+    </div>
+  </nav>
+</body>
+</html>

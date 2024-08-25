@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Khataabook</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+    rel="stylesheet"
+  />
+  <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/index.css">
+  <script src="/js/index.js"></script>
+</head>
+<body class="bg-white text-gray-800 min-h-screen flex flex-col">
+
+  <!-- Navbar -->
+  <nav id="navbar" class="navbar-light p-4 flex justify-between items-center shadow-3d">
+    <div class="text-white text-xl font-bold text-shadow-3d">Khataabook</div>
+    <div class="space-x-4 flex items-center">
+      <!-- Theme Toggle Button -->
+      <button id="theme-toggle" class="text-white focus:outline-none shadow-3d p-2 rounded text-shadow-3d">
+        🌙
+      </button>
+    <div class="space-x-4">
+      <a href="/logout" class="text-white">Logout</a>
+      <a href="/" class="text-white">Home</a>
+      <a href="/create" class="text-white">Create New Hisaab</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-grow flex justify-center items-center p-6">
+    <div class="w-full max-w-2xl max-h-[70vh] overflow-y-auto">
+      <h1 class="text-3xl md:text-4xl font-bold mb-6 text-center">All Hisaab Khataab</h1>
+      <ul class="space-y-4">
+        <!-- List Item -->
+        <% if (files.length > 0) { %>
+          <% files.forEach(function(file) { 
+            // Remove .txt extension from filename
+            let filenameWithoutExt = file.replace('.txt', '');
+          %>
+            <li class="flex justify-between items-center bg-gray-100 p-4 rounded">
+              <span class="text-lg"><%= filenameWithoutExt %></span>
+              <div class="space-x-4">
+                <a href="/hisaab/<%= file%>" class="text-blue-500">👁️</a>
+                <a href="/edit/<%=file%>" class="text-blue-500"><i class="icon-edit"></i> edit</a>
+                <a href="/delet/<%=file%>" class="text-blue-500">🗑️</a>
+              </div>
+            </li>
+          <% }) %>
+        <% } else { %>
+          <h2 class="text-center text-lg text-gray-500">No hisaab is created</h2>
+        <% } %>
+      </ul>
+    </div>
+  </main>
+
+</body>
+</html>
