@@ -1,10 +1,13 @@
 const express = require('express');
 const app = express();
 const path = require('path');
+const bcrypt = require('bcrypt')
 const fs = require('fs');
-const registerUser = require('./model/register.js')
+const { registerValidator, RegisterUser } = require('./model/register.js');
+// const {loginUserSchema, loginValidator} = require('./model/login.js')
 const mongooseconfig = require('./config/mongoose.js')
 const session  = require('express-session')
+
 // const login = require('./model/login.js')
 
 // Set the view engine to EJS
@@ -27,22 +30,25 @@ app.get('/', function (req, res) {
       return res.render('index', { files: [], user: null });
   }
 
-  fs.readdir(path.join(__dirname, 'hisaab'), function (err, files) {
+  const userDir = path.join(__dirname, 'hisaab', req.session.user.username);
+  
+  // Ensure the user's directory exists
+  if (!fs.existsSync(userDir)) {
+      return res.render('index', { files: [], user: req.session.user });
+  }
+
+  fs.readdir(userDir, function (err, files) {
       if (err) return res.status(500).send(err);
 
-      // Map through the files to extract the title (without the date) and the date
       const parsedFiles = files.map(file => {
-          // Regex to extract the date from the filename
           const dateMatch = file.match(/\((\d{1,2}-\d{1,2}-\d{4})\)/);
           const createdDate = dateMatch ? dateMatch[1] : 'Unknown Date';
-
-          // Remove the date and ".txt" extension from the filename to get the title
           const title = file.replace(/ \(\d{1,2}-\d{1,2}-\d{4}\)\.txt$/, '');
 
           return {
-              name: file,           // The full filename (with date and extension)
-              title: title,         // The cleaned title (without date and extension)
-              createdDate: createdDate // The extracted date
+              name: file,
+              title: title,
+              createdDate: createdDate
           };
       });
 
@@ -52,41 +58,85 @@ app.get('/', function (req, res) {
 
 
 
+
 // app.get('/index',function(req, res){
 //   res.render('index')
 // })
 
+// Register route
 app.post('/register', async function (req, res) {
-  let { username, name, email, password, conformpassword } = req.body;
-  let createUser = await registerUser.create({
-    username,
-    name,
-    email,
-    password,
-    conformpassword
-  })
-  // res.send(createUser);
-  res.render('login')
-})
+  let { username, name, email, password, confirmPassword } = req.body;
+
+  // Step 1: Validate request data using Joi
+  const { error } = registerValidator({ username, name, email, password, confirmPassword });
+  if (error) {
+    return res.status(400).send(error.message); // Return early if there's a validation error
+  }
+
+  try {
+    // Step 2: Check if the username or email already exists
+    const existingUser = await RegisterUser.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      if (existingUser.username === username) {
+        return res.status(400).send('Username is already taken.');
+      }
+      if (existingUser.email === email) {
+        return res.status(400).send('Email is already registered.');
+      }
+    }
+
+    // Step 3: Hash the password before saving
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Step 4: Create user
+    const createUser = await RegisterUser.create({
+      username,
+      name,
+      email,
+      password: hashedPassword, // Save the hashed password
+    });
+
+    res.send(createUser); // Send a successful response
+  } catch (err) {
+    return res.status(500).send('Error creating user: ' + err.message); // Handle any error during user creation
+  }
+});
+
+
+
+
+
 
 app.get('/users', async function (req, res) {
-  let readUsers = await registerUser.find()
-  res.send(readUsers)
-})
+  let readUsers = await RegisterUser.find();
+  res.send(readUsers);
+});
 
 app.post("/login", async function (req, res) {
   let { email, password } = req.body;
-  const user = await registerUser.findOne({ email });
-
-  if (!user || user.password !== password) {
-    return res.status(400).send('Invalid email or password.');
-  }
-
-  req.session.user = user;
   
+  try {
+    const user = await RegisterUser.findOne({ email });
 
-    res.redirect('/' );
-  });
+    if (!user) {
+      return res.status(400).send('Invalid email or password.');  // Return early if user not found
+    }
+
+    // Compare the hashed password with the incoming password
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(400).send('Invalid email or password.');  // Return early if password is invalid
+    }
+
+    req.session.user = user;
+
+    res.redirect('/');  // Send a single response after successful login
+  } catch (err) {
+    return res.status(500).send('Error logging in: ' + err.message);  // Handle any error during login
+  }
+});
+
 // });
 
 
@@ -125,40 +175,60 @@ app.get('/register',function(req,res){
   });
 
   // Route: Edit Hisaab
-  app.get('/edit/:filename',isAuthenticated, function (req, res) {
-    const filePath = path.join(__dirname, 'hisaab', req.params.filename);
-    fs.readFile(filePath, 'utf-8', function (err, filedata) {
+// Route: Edit Hisaab
+app.get('/edit/:filename', isAuthenticated, function (req, res) {
+  const userDir = path.join(__dirname, 'hisaab', req.session.user.username);
+  const filePath = path.join(userDir, req.params.filename);
+  
+  // Ensure the file exists before attempting to read it
+  if (!fs.existsSync(filePath)) {
+      return res.status(404).send('File not found.');
+  }
+
+  fs.readFile(filePath, 'utf-8', function (err, filedata) {
       if (err) return res.status(500).send(err);
       res.render('edit', { filedata, filename: req.params.filename });
-    });
   });
+});
+
 
   // Route: Update Hisaab
-  app.post('/update/:filename', function (req, res) {
-    const filePath = path.join(__dirname, 'hisaab', req.params.filename);
-    fs.writeFile(filePath, req.body.content, function (err) {
-      if (err) return res.status(500).send(err);
+// Route: Update Hisaab
+app.post('/update/:filename', isAuthenticated, function (req, res) {
+  const userDir = path.join(__dirname, 'hisaab', req.session.user.username);
+  const filePath = path.join(userDir, req.params.filename);
+
+  // Write the updated content back to the original file
+  fs.writeFile(filePath, req.body.content, function (err) {
+      if (err) return res.status(500).send('Error updating the file: ' + err.message);
+
+      // Redirect back to the main page or a success page after editing
       res.redirect('/');
-    });
   });
+});
+
 
   // Route: View Specific Hisaab
-  app.get('/hisaab/:filename', function (req, res) {
-    const filePath = path.join(__dirname, 'hisaab', req.params.filename);
+  app.get('/hisaab/:filename', isAuthenticated, function (req, res) {
+    const userDir = path.join(__dirname, 'hisaab', req.session.user.username);
+    const filePath = path.join(userDir, req.params.filename);
+    
     fs.readFile(filePath, 'utf-8', function (err, filedata) {
-      if (err) return res.status(500).send(err);
-      res.render('hisaab', { filedata, filename: req.params.filename });
+        if (err) return res.status(500).send(err);
+        res.render('hisaab', { filedata, filename: req.params.filename });
     });
-  });
+});
 
   // Route: Delete Hisaab
-  app.get('/delet/:filename', function (req, res) {
-    const filePath = path.join(__dirname, 'hisaab', req.params.filename);
+  app.get('/delet/:filename', isAuthenticated, function (req, res) {
+    const userDir = path.join(__dirname, 'hisaab', req.session.user.username);
+    const filePath = path.join(userDir, req.params.filename);
+    
     fs.unlink(filePath, function (err) {
-      if (err) return res.status(500).send(err);
-      res.redirect('/');
+        if (err) return res.status(500).send(err);
+        res.redirect('/');
     });
-  });
+});
 
   // Route: Create New Hisaab (Post)
   app.post('/createhisaab', isAuthenticated, function (req, res) {
@@ -169,14 +239,21 @@ app.get('/register',function(req,res){
     const currentDate = new Date();
     const date = `${currentDate.getDate()}-${currentDate.getMonth() + 1}-${currentDate.getFullYear()}`;
 
-    // Use the date as part of the filename
-    const filePath = path.join(__dirname, 'hisaab', `${req.body.title} (${date}).txt`);
+    const userDir = path.join(__dirname, 'hisaab', req.session.user.username);
+
+    // Ensure the user's directory exists
+    if (!fs.existsSync(userDir)) {
+        fs.mkdirSync(userDir);
+    }
+
+    const filePath = path.join(userDir, `${req.body.title} (${date}).txt`);
 
     fs.writeFile(filePath, req.body.contant, function (err) {
         if (err) return res.status(500).send(err);
         res.redirect('/');
     });
 });
+
 
 
   // Start the server

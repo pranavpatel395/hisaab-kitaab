@@ -4,13 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Khaatabook</title>
-  <!-- <script src="/js/index.js"></script> -->
   <script src="https://cdn.tailwindcss.com"></script>
- <style>
-  .shadowss {
-  box-shadow: 0 1px 3px 0 rgb(87 85 85 / 71%), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-}
- </style>
+  <style>
+    .shadowss {
+      box-shadow: 0 1px 3px 0 rgb(87 85 85 / 71%), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    }
+    .break-word {
+      word-break: break-word; /* Break long words if necessary */
+      white-space: normal;    /* Allow text to wrap to the next line */
+    }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
@@ -27,10 +30,10 @@
     <!-- Main Content -->
     <main class="mt-8 flex-grow flex flex-col justify-center items-center">
       <div class="w-full max-w-2xl bg-white p-6 rounded shadow">
-        <h2 class="text-2xl font-semibold mb-6 text-center">
-          Hisaab of <a href="#" class="text-blue-500 hover:underline"><%= filename.replace('.txt', '')%></a>
+        <h2 class="text-2xl font-semibold mb-6 text-center break-word">
+          Hisaab of <a href="#" class="text-blue-500 hover:underline break-word"><%= filename.replace('.txt', '') %></a>
         </h2>
-        <p class="mb-6 text-gray-700 whitespace-pre-wrap"><%= filedata %></p>
+        <p class="mb-6 text-gray-700 whitespace-pre-wrap break-words"><%= filedata %></p>
         <div class="text-center">
           <a href="/edit/<%= filename %>" class="text-blue-500 hover:underline">Edit Hisaab</a>
         </div>
